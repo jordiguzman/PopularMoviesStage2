@@ -1,21 +1,29 @@
 package appkite.jordiguzman.com.polularmoviesstage2.ui;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.databinding.DataBindingUtil;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,81 +33,95 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import appkite.jordiguzman.com.polularmoviesstage2.R;
+import appkite.jordiguzman.com.polularmoviesstage2.adapter.MovieAdapterFavorites;
 import appkite.jordiguzman.com.polularmoviesstage2.adapter.ReviewAdapter;
 import appkite.jordiguzman.com.polularmoviesstage2.adapter.TrailerAdapter;
 import appkite.jordiguzman.com.polularmoviesstage2.data.MovieContract;
+import appkite.jordiguzman.com.polularmoviesstage2.databinding.ActivityDetailBinding;
 import appkite.jordiguzman.com.polularmoviesstage2.model.Movie;
 import appkite.jordiguzman.com.polularmoviesstage2.model.Review;
 import appkite.jordiguzman.com.polularmoviesstage2.model.Trailer;
 import appkite.jordiguzman.com.polularmoviesstage2.utils.MovieJsonUtils;
 import appkite.jordiguzman.com.polularmoviesstage2.utils.MovieUrlUtils;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 import static appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity.btn_retry;
 import static appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity.tv_error;
+import static appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity.tv_no_data;
 
-public class DetailActivity extends AppCompatActivity {
+
+public class DetailActivity extends AppCompatActivity implements  MovieAdapterFavorites.MovieClickListener{
+
+    ActivityDetailBinding mBinding;
+    @BindView(R.id.rv_reviews)
+    RecyclerView mRecyclerViewReviews;
+    @BindView(R.id.rv_trailers)
+    RecyclerView mRecyclerViewTrailers;
+    @BindView(R.id.fb_detail)
+    FloatingActionButton fb;
 
     private static final String LOG_TAG = DetailActivity.class.getSimpleName();
     private static final String URL_IMAGE_PATH = "http://image.tmdb.org/t/p/w342";
     public static Movie movieDataReceived;
-    private RecyclerView mRecyclerViewReviews;
-    private RecyclerView mRecyclerViewTrailers;
     private Review[] mReviews = null;
     private Trailer[] mTrailers = null;
-    private TextView tv_error_adapter, tv_error_adapter_trailer;
+    public static ArrayList<String[]> arrayListMovies = new ArrayList<>();
     public static ArrayList<String> dataDetail = new ArrayList<>();
-    private Cursor mCursor= null;
+    private String title, poster, plot, rating, release, releaseFinal, id;
+    public static String [][] movieFav;
+    private boolean fromFavorites;
+    int position, idToast;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detail);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_detail);
+        ButterKnife.bind(this);
 
-        ImageView iv_poster_detail = findViewById(R.id.iv_poster_detail);
-        TextView tv_title = findViewById(R.id.tv_title);
-        TextView tv_plot = findViewById(R.id.tv_plot);
-        TextView tv_rating = findViewById(R.id.tv_rating);
-        TextView tv_release = findViewById(R.id.tv_release);
-        tv_error_adapter = findViewById(R.id.tv_adapter_no_data);
-        tv_error_adapter_trailer = findViewById(R.id.tv_adapter_no_data_review);
-        FloatingActionButton floatingActionButton = findViewById(R.id.fb_detail);
-        floatingActionButton.setSize(40);
-
-
-        mRecyclerViewReviews = findViewById(R.id.rv_reviews);
         mRecyclerViewReviews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        mRecyclerViewTrailers = findViewById(R.id.rv_trailers);
         mRecyclerViewTrailers.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         mRecyclerViewReviews.setHasFixedSize(true);
         mRecyclerViewTrailers.setHasFixedSize(true);
 
+        Bundle bundle = getIntent().getExtras();
+        assert bundle != null;
+        fromFavorites= bundle.getBoolean("fromFavorites");
+        position = bundle.getInt("sendPosition");
 
-        movieDataReceived = getIntent().getParcelableExtra("sendData");
+        if (!fromFavorites){
+            movieDataReceived = getIntent().getParcelableExtra("sendData");
+            title = movieDataReceived.getmTitle();
+            poster = movieDataReceived.getmMoviePoster();
+            plot = movieDataReceived.getmPlot();
+            rating = movieDataReceived.getmRating();
+            release = movieDataReceived.getmReleaseDate();
+            releaseFinal = release.substring(0, 4);
+            fb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_favorite));
+            Picasso.with(this)
+                    .load(URL_IMAGE_PATH.concat(poster))
+                    .into(mBinding.ivPosterDetail);
 
-        String title = movieDataReceived.getmTitle();
-        String poster = movieDataReceived.getmMoviePoster();
-        String plot = movieDataReceived.getmPlot();
-        String rating = movieDataReceived.getmRating();
-        String release = movieDataReceived.getmReleaseDate();
-        String releaseFinal = release.substring(0, 4);
+            putData();
 
+        }else {
+            fb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_delete));
+            loadData();
+            Picasso.with(this)
+                    .load(movieFav[position][1])
+                    .into(mBinding.ivPosterDetail);
+            title= movieFav[position][0];
+            plot= movieFav[position][4];
+            rating= movieFav[position][3];
+            release = movieFav[position][2];
+            releaseFinal = release.substring(0, 4);
+            id= movieFav[position][5];
+            putData();
+            viewFavorites();
 
-        Picasso.with(this)
-                .load(URL_IMAGE_PATH.concat(poster))
-                .into(iv_poster_detail);
-        tv_title.setText(title);
-        tv_plot.setText(plot);
-        tv_rating.setText(rating.concat("/10"));
-        tv_release.setText(releaseFinal);
-
-        setTitle(title);
-         dataDetail.add(getTitle().toString());
-         dataDetail.add(URL_IMAGE_PATH.concat(poster));
-         dataDetail.add(plot);
-         dataDetail.add(rating);
-         dataDetail.add(releaseFinal);
-
-
+        }
+        Log.e("Valor fromFavorites: ", String.valueOf(fromFavorites));
 
 
         new MovieFetchTaskReviews().execute("reviews");
@@ -107,13 +129,135 @@ public class DetailActivity extends AppCompatActivity {
 
     }
 
+    private void loadData() {
+        arrayListMovies.clear();
+        movieFav=null;
+        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null
+                , null, null,
+                MovieContract.MovieEntry.COLUMN_ID);
 
-    public void saveData(View view){
+        if (mCursor != null) {
+            while (mCursor.moveToNext()) {
+                arrayListMovies.add(new String[]{
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_IMAGE)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RATING)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_PLOT)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_ID))});
 
-        if (!isFavorited()){
-            Toast.makeText(this, "This movie is already in favorites", Toast.LENGTH_LONG).show();
+            }
+            movieFav= arrayListMovies.toArray(new String[arrayListMovies.size()][5]);
+
+
+            mCursor.close();
+        }
+
+    }
+
+    public void putData(){
+        mBinding.tvTitle.setText(title);
+        mBinding.tvPlot.setText(plot);
+        mBinding.tvRating.setText(rating);
+        mBinding.tvRelease.setText(releaseFinal);
+        setTitle(title);
+
+        dataDetail.add(getTitle().toString());
+        dataDetail.add(poster);
+        dataDetail.add(plot);
+        dataDetail.add(rating);
+        dataDetail.add(releaseFinal);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void saveDeleteData(View view){
+
+        if (!isFavorited() && !fromFavorites) {
+            idToast = 2;
+            toastMessages();
             return;
         }
+        if (!isFavorited()){
+            idToast=1;
+            deleteMovieData();
+        }else {
+            idToast=0;
+            saveMovieData();
+        }
+    }
+    private void toastMessages(){
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.toast, (ViewGroup)findViewById(R.id.toast_container));
+        TextView tv_toast = layout.findViewById(R.id.tv_toast);
+
+        switch (idToast){
+            case 0:
+                tv_toast.setText(getResources().getString(R.string.toast_save));
+                break;
+            case 1:
+                tv_toast.setText(getResources().getString(R.string.toast_delete));
+                break;
+            case 2:
+                tv_toast.setText(getResources().getString(R.string.toast_in_favorites));
+                break;
+
+        }
+        Toast toast = new Toast(getApplicationContext());
+        toast.setGravity(Gravity.CENTER_HORIZONTAL, 0, 0);
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setView(layout);
+        toast.show();
+    }
+
+    private void viewFavorites() {
+
+            MainActivity.mRecyclerView.setVisibility(View.VISIBLE);
+            MovieAdapterFavorites movieAdapter = new MovieAdapterFavorites(dataDetail, getApplicationContext(), DetailActivity.this);
+            MainActivity.mRecyclerView.setAdapter(movieAdapter);
+
+
+    }
+
+    public boolean isFavorited(){
+
+        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                MovieContract.MovieEntry.COLUMN_ID);
+        if (mCursor != null){
+            while (mCursor.moveToNext()){
+                String idMovies = mCursor.getString(1);
+                String idMovieActual;
+                if (!fromFavorites){
+                     idMovieActual= String.valueOf(movieDataReceived.getmId());
+                }else {
+                    idMovieActual= movieFav[position][5];
+                }
+                if (idMovies.equals(idMovieActual)){
+                    return false;
+                }
+            }
+        }
+        assert mCursor != null;
+        mCursor.close();
+        return true;
+    }
+
+    private void deleteMovieData() {
+        ContentResolver contentResolver = getContentResolver();
+        Uri uri = MovieContract.MovieEntry.CONTENT_URI;
+
+        uri = uri.buildUpon().appendPath(String.valueOf(id)).build();
+
+        contentResolver.delete(uri, null, null);
+        MainActivity.dataDetail.clear();
+        idToast=1;
+        toastMessages();
+
+    }
+
+    private void saveMovieData() {
         ContentValues contentValues = new ContentValues();
         contentValues.put(MovieContract.MovieEntry.COLUMN_ID, movieDataReceived.getmId());
         contentValues.put(MovieContract.MovieEntry.COLUMN_TITLE, movieDataReceived.getmTitle());
@@ -122,25 +266,9 @@ public class DetailActivity extends AppCompatActivity {
         contentValues.put(MovieContract.MovieEntry.COLUMN_RATING, movieDataReceived.getmRating());
         contentValues.put(MovieContract.MovieEntry.COLUMN_RELEASE, movieDataReceived.getmReleaseDate());
         getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI, contentValues);
+        idToast=0;
+        toastMessages();
 
-
-    }
-    public boolean isFavorited(){
-        mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI,
-                null,
-                null,
-                null,
-                MovieContract.MovieEntry.COLUMN_ID);
-        if (mCursor != null){
-            while (mCursor.moveToNext()){
-                String idMovies = mCursor.getString(1);
-                String idMovieActual = String.valueOf(movieDataReceived.getmId());
-                if (idMovies.equals(idMovieActual)){
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override
@@ -154,10 +282,16 @@ public class DetailActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                if (MainActivity.queryMovie.equals("popular")) {
-                    MainActivity.queryMovie = "popular";
-                } else if (MainActivity.queryMovie.equals("top_rated")) {
-                    MainActivity.queryMovie = "top_rated";
+                switch (MainActivity.queryMovie) {
+                    case "popular":
+                        MainActivity.queryMovie = "popular";
+                        break;
+                    case "top_rated":
+                        MainActivity.queryMovie = "top_rated";
+                        break;
+                    case "favorites":
+                        MainActivity.queryMovie = "favorites";
+                        break;
                 }
                 break;
             case R.id.menu_share:
@@ -174,10 +308,16 @@ public class DetailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onClickMovie(int position) {
+
+    }
+
 
     @SuppressLint("StaticFieldLeak")
     private class MoviewFetchTaskTrailer extends AsyncTask<String, Void, Trailer[]> {
 
+        URL trailerUrl;
         @Override
         protected Trailer[] doInBackground(String... strings) {
 
@@ -187,7 +327,12 @@ public class DetailActivity extends AppCompatActivity {
                 btn_retry.setVisibility(View.INVISIBLE);
                 return null;
             }
-            URL trailerUrl = MovieUrlUtils.buildUrlTrailers(String.valueOf(movieDataReceived.getmId()).concat("/"), strings[0]);
+            if (!fromFavorites){
+                trailerUrl= MovieUrlUtils.buildUrlReview(String.valueOf(movieDataReceived.getmId()).concat("/"), strings[0]);
+            }else {
+                trailerUrl= MovieUrlUtils.buildUrlReview(id.concat("/"), strings[0]);
+
+            }
             String trailerResponse;
             try {
                 trailerResponse = MovieUrlUtils.getResponseFromHttp(trailerUrl);
@@ -221,7 +366,7 @@ public class DetailActivity extends AppCompatActivity {
             assert trailers != null;
             if (trailers.length == 0) {
                 mRecyclerViewTrailers.setVisibility(View.INVISIBLE);
-                tv_error_adapter_trailer.setVisibility(View.VISIBLE);
+                mBinding.tvAdapterNoData.setVisibility(View.VISIBLE);
 
             }
         }
@@ -235,14 +380,20 @@ public class DetailActivity extends AppCompatActivity {
         @Override
         protected Review[] doInBackground(String... strings) {
 
-
+            URL reviewUrl;
             if (MovieUrlUtils.API_KEY.equals("")) {
                 MainActivity.errorNetworkApi();
                 tv_error.setText(R.string.missing_api_key);
                 btn_retry.setVisibility(View.INVISIBLE);
                 return null;
             }
-            URL reviewUrl = MovieUrlUtils.buildUrlReview(String.valueOf(movieDataReceived.getmId()).concat("/"), strings[0]);
+
+            if (!fromFavorites){
+                 reviewUrl= MovieUrlUtils.buildUrlReview(String.valueOf(movieDataReceived.getmId()).concat("/"), strings[0]);
+            }else {
+                reviewUrl= MovieUrlUtils.buildUrlReview(id.concat("/"), strings[0]);
+
+            }
             String reviewResponse;
             try {
                 reviewResponse = MovieUrlUtils.getResponseFromHttp(reviewUrl);
@@ -276,12 +427,20 @@ public class DetailActivity extends AppCompatActivity {
             assert reviews != null;
             if (reviews.length == 0) {
                 mRecyclerViewReviews.setVisibility(View.INVISIBLE);
-                tv_error_adapter.setVisibility(View.VISIBLE);
+                mBinding.tvAdapterNoData.setVisibility(View.VISIBLE);
 
             }
 
         }
     }
 
-
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        MovieAdapterFavorites movieAdapterFavorites = new MovieAdapterFavorites(MainActivity.dataDetail, this, null);
+        movieAdapterFavorites.notifyDataSetChanged();
+        if (dataDetail.size()==0) {
+            tv_no_data.setVisibility(View.VISIBLE);
+        }
+    }
 }

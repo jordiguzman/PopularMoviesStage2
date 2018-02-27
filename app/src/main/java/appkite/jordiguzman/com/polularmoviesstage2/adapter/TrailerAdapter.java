@@ -52,6 +52,11 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerH
                 .load(url_base_youtube_image.concat(key).concat("/0.jpg"))
                 .into(iv_trailer_image);
          iv_trailer_image.setOnClickListener(new View.OnClickListener() {
+              /*try {
+                 return new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + id));
+             } catch (ActivityNotFoundException ex) {
+                 return new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + id));
+             }*/
              @Override
              public void onClick(View v) {
                  String urlVideo= String.valueOf(url_base_youtube_video.concat(key));

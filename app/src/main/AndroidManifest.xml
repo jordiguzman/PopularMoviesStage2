@@ -30,12 +30,10 @@
                 android:value=".ui.MainActivity" />
         </activity>
 
-
         <provider
-            android:authorities="appkite.jordiguzman.com.polularmoviesstage2"
             android:name=".data.MovieContentProvider"
+            android:authorities="appkite.jordiguzman.com.polularmoviesstage2"
             android:exported="false" />
-
 
     </application>
 

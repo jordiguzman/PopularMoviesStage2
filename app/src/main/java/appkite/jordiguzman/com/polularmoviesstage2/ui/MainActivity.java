@@ -1,6 +1,7 @@
 package appkite.jordiguzman.com.polularmoviesstage2.ui;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
@@ -13,7 +14,6 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -23,6 +23,8 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 import appkite.jordiguzman.com.polularmoviesstage2.R;
 import appkite.jordiguzman.com.polularmoviesstage2.adapter.MovieAdapter;
@@ -34,16 +36,18 @@ import appkite.jordiguzman.com.polularmoviesstage2.utils.FetchMyDataTask;
 import appkite.jordiguzman.com.polularmoviesstage2.utils.MovieUrlUtils;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieClickListener,
-        MovieAdapterFavorites.MovieClickListener{
+        MovieAdapterFavorites.MovieClickListener  {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String CALLBACK_QUERY = "callbackQuery";
     private static final String CALLBACK_NAMESORT= "callbackNamesort";
+    private static final String CALLBACK_FAVORITES = "callbackFavorites";
     public static String queryMovie = "popular";
     private String nameSort = "Popular Movies";
     public static Movie[] mMovie = null;
-    private Cursor mCursor;
-
+    private boolean isFavorited;
+    private MovieAdapterFavorites movieAdapter;
+    public static ArrayList<String> dataDetail = new ArrayList<>();
 
     @SuppressLint("StaticFieldLeak")
     public static RecyclerView mRecyclerView;
@@ -53,6 +57,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     public static TextView tv_error;
     @SuppressLint("StaticFieldLeak")
     public static Button btn_retry;
+    @SuppressLint("StaticFieldLeak")
+    public static TextView tv_no_data;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         progressBar = findViewById(R.id.pb_main);
         tv_error = findViewById(R.id.tv_error);
+        tv_no_data = findViewById(R.id.tv_no_data);
+        tv_no_data.setVisibility(View.INVISIBLE);
 
         setTitle(nameSort);
         if (!isOnline()) {
@@ -98,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         outState.putString(CALLBACK_QUERY, queryMovieSaved);
         outState.putString(CALLBACK_NAMESORT, nameSortSaved);
 
+
     }
     private boolean isOnline() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -114,6 +125,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         return true;
     }
 
+    @TargetApi(Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (!isOnline()) return false;
@@ -133,15 +146,40 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 setTitle(nameSort);
                 break;
             case R.id.favorites:
-                saveDataToDetail();
                 nameSort= "Favorites";
+                loadFavorites();
                 setTitle(nameSort);
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void loadFavorites() {
+        dataDetail.clear();
 
+        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, null);
+
+        if (mCursor != null){
+            while (mCursor.moveToNext()){
+                dataDetail.add(mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_IMAGE)));
+            }
+        }
+        assert mCursor != null;
+        mCursor.close();
+        mRecyclerView.setVisibility(View.VISIBLE);
+        hideProgressAndTextview();
+
+        movieAdapter = new MovieAdapterFavorites(dataDetail, this, MainActivity.this);
+        movieAdapter.notifyDataSetChanged();
+        mRecyclerView.setAdapter(movieAdapter);
+        if (dataDetail.size()==0){
+            tv_no_data.setVisibility(View.VISIBLE);
+        }else {
+            tv_no_data.setVisibility(View.INVISIBLE);
+        }
+
+    }
 
 
     public static void errorNetworkApi() {
@@ -169,9 +207,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
 
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onClickMovie(int position) {
+
 
         if (!isOnline()) {
             mRecyclerView.setVisibility(View.INVISIBLE);
@@ -179,30 +218,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             return;
         }
 
+        if (nameSort.equals("Favorites")){
+            isFavorited=true;
+            Intent intentToDetail = new Intent(this, DetailActivity.class);
+            intentToDetail.putExtra("fromFavorites", isFavorited);
+            intentToDetail.putExtra("sendPosition", position);
+            startActivity(intentToDetail, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
+            isFavorited=false;
+            return;
+        }
+
         Intent intentToDetail = new Intent(this, DetailActivity.class);
         intentToDetail.putExtra("sendData",  mMovie[position]);
         startActivity(intentToDetail, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
-    }
-
-    private void saveDataToDetail() {
-
-    mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, null);
-
-        Movie movie = new Movie();
-        while (mCursor.moveToNext()){
-            movie.setmTitle(mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE)));
-            movie.setmPlot(mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_PLOT)));
-            movie.setmMoviePoster(mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_IMAGE)));
-            movie.setmRating(mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RATING)));
-            movie.setmReleaseDate(mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE)));
-            Log.e(LOG_TAG, movie.getmTitle() + movie.getmPlot()+ movie.getmMoviePoster() + movie.getmRating() + movie.getmReleaseDate());
-        }
-
-        mRecyclerView.setVisibility(View.VISIBLE);
-        hideProgressAndTextview();
-        MovieAdapterFavorites movieAdapter = new MovieAdapterFavorites(mCursor, getApplicationContext(), MainActivity.this);
-        mRecyclerView.setAdapter(movieAdapter);
-
     }
 
 
@@ -227,7 +255,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             }
         }
     }
-
 
 
 }

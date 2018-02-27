@@ -1,0 +1,26 @@
+ movieAdapter=null;
+        TextView tv_no_data= findViewById(R.id.tv_no_data);
+        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null
+                , null);
+        dataDetail.clear();
+        if (mCursor != null){
+            int i=0;
+            while (mCursor.moveToNext()){
+                dataDetail.add(mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_IMAGE)));
+                Log.e(LOG_TAG, "Valor dataDetail: " + dataDetail.get(i));
+                i++;
+            }
+            mCursor.close();
+            mRecyclerView.setVisibility(View.VISIBLE);
+            hideProgressAndTextview();
+
+            movieAdapter = new MovieAdapterFavorites(dataDetail, this, MainActivity.this);
+            movieAdapter.notifyDataSetChanged();
+            mRecyclerView.setAdapter(movieAdapter);
+
+        }
+        if (dataDetail.size()==0){
+            tv_no_data.setVisibility(View.VISIBLE);
+        }else {
+            tv_no_data.setVisibility(View.INVISIBLE);
+        }

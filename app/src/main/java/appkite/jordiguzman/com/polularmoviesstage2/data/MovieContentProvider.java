@@ -20,8 +20,8 @@ import static appkite.jordiguzman.com.polularmoviesstage2.data.MovieContract.Mov
 public class MovieContentProvider extends ContentProvider {
 
     public static final String LOG_TAG = MovieContentProvider.class.getSimpleName();
-    public static final int MOVIES = 100;
-    public static final int MOVIES_WITH_ID = 101;
+    public static final int MOVIES = 101;
+    public static final int MOVIES_WITH_ID = 102;
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
 
@@ -109,7 +109,7 @@ public class MovieContentProvider extends ContentProvider {
         switch (match){
             case MOVIES_WITH_ID:
                 String id = uri.getPathSegments().get(1);
-                movieDeleted = db.delete(TABLE_NAME, "_id=?", new String[]{id});
+                movieDeleted = db.delete(TABLE_NAME, MovieContract.MovieEntry.COLUMN_ID +"=?", new String[]{id});
                 break;
                 default:
                     throw new UnsupportedOperationException("Unknow uri: " + uri);

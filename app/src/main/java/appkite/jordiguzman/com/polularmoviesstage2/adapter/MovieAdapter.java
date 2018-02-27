@@ -11,6 +11,7 @@ import com.squareup.picasso.Picasso;
 
 import appkite.jordiguzman.com.polularmoviesstage2.R;
 import appkite.jordiguzman.com.polularmoviesstage2.model.Movie;
+import appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity;
 
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieHolder> {
@@ -42,7 +43,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieHolder>
     public void onBindViewHolder(MovieHolder holder, int position) {
 
         Picasso.with(mContext)
-                .load(URL_IMAGE_PATH.concat(mMovie[position].getmMoviePoster()))
+                .load(URL_IMAGE_PATH.concat(MainActivity.mMovie[position].getmMoviePoster()))
                 .fit()
                 .into(holder.imageViewHolder);
 
