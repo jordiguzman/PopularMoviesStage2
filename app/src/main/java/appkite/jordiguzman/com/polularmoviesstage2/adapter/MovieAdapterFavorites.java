@@ -2,7 +2,6 @@ package appkite.jordiguzman.com.polularmoviesstage2.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,19 +12,18 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 
 import appkite.jordiguzman.com.polularmoviesstage2.R;
-import appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity;
+import appkite.jordiguzman.com.polularmoviesstage2.ui.DetailActivity;
 
 
 public class MovieAdapterFavorites extends RecyclerView.Adapter<MovieAdapterFavorites.MovieHolder>{
 
     private Context mContext=null;
 
-    private MovieClickListener mMovieClickListener = null;
 
-    public MovieAdapterFavorites(ArrayList<String> arrayList, Context context, MovieClickListener movieClickListener){
-        MainActivity.dataDetail = arrayList;
+    public MovieAdapterFavorites(ArrayList<String[]> arrayList, Context context){
+        DetailActivity.arrayListMovies = arrayList;
         mContext = context;
-        mMovieClickListener = movieClickListener;
+
 
     }
 
@@ -40,36 +38,29 @@ public class MovieAdapterFavorites extends RecyclerView.Adapter<MovieAdapterFavo
     @Override
     public void onBindViewHolder(MovieHolder holder, int position) {
 
-        Log.e("Position", String.valueOf(position));
         Picasso.with(mContext)
-                .load(MainActivity.dataDetail.get(position))
+                .load(DetailActivity.movieFav[position][1])
                 .into(holder.imageViewHolder);
+
     }
 
 
     @Override
     public int getItemCount() {
-        return MainActivity.dataDetail.size();
+        return DetailActivity.movieFav.length;
     }
 
-    public interface MovieClickListener {
-        void onClickMovie(int position);
-    }
 
-    class MovieHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+    class MovieHolder extends RecyclerView.ViewHolder{
 
         final ImageView imageViewHolder;
 
         MovieHolder(View itemView) {
             super(itemView);
             imageViewHolder = itemView.findViewById(R.id.iv_list_item_poster);
-            imageViewHolder.setOnClickListener(this);
+
         }
 
-        @Override
-        public void onClick(View v) {
-            int clickPosition = getAdapterPosition();
-            mMovieClickListener.onClickMovie(clickPosition);
-        }
     }
 }

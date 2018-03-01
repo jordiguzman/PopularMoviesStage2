@@ -8,9 +8,9 @@
 
     <TextView
         android:id="@+id/tv_toast"
-        android:padding="8sp"
-        android:background="@drawable/rect_detail"
-        android:textColor="@android:color/white"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:background="@drawable/rect_detail_blue"
+        android:padding="8sp"
+        android:textColor="@android:color/white"/>
 </LinearLayout>

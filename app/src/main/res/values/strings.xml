@@ -5,6 +5,8 @@
 
     <string name="sort">Sort By</string>
     <string name="popularity">Popular Movies</string>
+    <string name="splash_1">Popular</string>
+    <string name="splash_2">Movies</string>
     <string name="top_rated">Top rated</string>
     <string name="title">Title:</string>
     <string name="plot_synopsis">Plot Synopsis:</string>
@@ -22,6 +24,7 @@
     <string name="favorites">Favorites</string>
     <string name="no_favoriyes_yet">No favorites yet…</string>
     <string name="toast_save">Movie save to Favorites</string>
-    <string name="toast_delete">Movie deleted form Favorites</string>
+    <string name="toast_delete">Movie deleted from Favorites</string>
     <string name="toast_in_favorites">This movie is already in Favorites</string>
+    <string name="image_splash">Image Splash</string>
 </resources>

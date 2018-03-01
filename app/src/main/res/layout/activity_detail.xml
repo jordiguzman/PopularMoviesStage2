@@ -28,23 +28,19 @@
             android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="235dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="start"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="6dp"
-                android:layout_marginLeft="15dp"
-                android:layout_marginStart="15dp"
                 android:layout_marginTop="6dp"
                 android:background="@drawable/border"
                 android:orientation="vertical">
 
                 <ImageView
                     android:id="@+id/iv_poster_detail"
-                    android:layout_width="185dp"
-                    android:layout_height="278dp"
-                    android:layout_gravity="center_horizontal|center"
-                    android:layout_marginBottom="6dp"
-                    android:layout_marginTop="6dp"
+                    android:layout_width="220dp"
+                    android:layout_height="331dp"
+                    android:layout_margin="16dp"
                     android:contentDescription="@string/image_poster" />
 
 
@@ -62,7 +58,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/rect_detail"
+                    android:background="@drawable/rect_detail_red"
                     android:padding="4dp"
                     android:text="@string/title"
                     android:textColor="@android:color/white"
@@ -82,7 +78,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/rect_detail"
+                    android:background="@drawable/rect_detail_red"
                     android:padding="4dp"
                     android:text="@string/plot_synopsis"
                     android:textColor="@android:color/white"
@@ -100,7 +96,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/rect_detail"
+                    android:background="@drawable/rect_detail_red"
                     android:padding="4dp"
                     android:text="@string/user_rating"
                     android:textColor="@android:color/white"
@@ -120,7 +116,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/rect_detail"
+                    android:background="@drawable/rect_detail_red"
                     android:padding="4dp"
                     android:text="@string/release_date"
                     android:textColor="@android:color/white"
@@ -140,7 +136,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/rect_detail"
+                    android:background="@drawable/rect_detail_red"
                     android:padding="4dp"
                     android:text="@string/trailers"
                     android:textColor="@android:color/white"
@@ -166,7 +162,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/rect_detail"
+                    android:background="@drawable/rect_detail_red"
                     android:padding="4dp"
                     android:text="@string/reviews"
                     android:textColor="@android:color/white"

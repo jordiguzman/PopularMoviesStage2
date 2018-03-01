@@ -1,6 +1,7 @@
 package appkite.jordiguzman.com.polularmoviesstage2.adapter;
 
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -8,6 +9,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -48,20 +51,23 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerH
         tv_trailer_adapter.append(name);
         final String url_base_youtube_video= "https://www.youtube.com/watch?v=";
         String url_base_youtube_image = "http://img.youtube.com/vi/";
+        final String url_base_vnd = "vnd.youtube:";
+        final String urlVideo= String.valueOf(url_base_youtube_video.concat(key));
         Picasso.with(mContext)
                 .load(url_base_youtube_image.concat(key).concat("/0.jpg"))
                 .into(iv_trailer_image);
          iv_trailer_image.setOnClickListener(new View.OnClickListener() {
-              /*try {
-                 return new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + id));
-             } catch (ActivityNotFoundException ex) {
-                 return new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + id));
-             }*/
              @Override
              public void onClick(View v) {
-                 String urlVideo= String.valueOf(url_base_youtube_video.concat(key));
-                 Intent intent= new Intent(Intent.ACTION_VIEW, Uri.parse(urlVideo));
-                 mContext.startActivity(intent);
+                 Animation shake = AnimationUtils.loadAnimation(mContext, R.anim.shake);
+                 v.startAnimation(shake);
+                 Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url_base_vnd.concat(key)));
+                 Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(urlVideo));
+                 try {
+                      mContext.startActivity(appIntent);
+                 } catch (ActivityNotFoundException ex) {
+                      mContext.startActivity(webIntent);
+                 }
              }
          });
     }

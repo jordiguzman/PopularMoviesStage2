@@ -35,8 +35,7 @@ import appkite.jordiguzman.com.polularmoviesstage2.model.Movie;
 import appkite.jordiguzman.com.polularmoviesstage2.utils.FetchMyDataTask;
 import appkite.jordiguzman.com.polularmoviesstage2.utils.MovieUrlUtils;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieClickListener,
-        MovieAdapterFavorites.MovieClickListener  {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieClickListener {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String CALLBACK_QUERY = "callbackQuery";
@@ -84,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         }
 
 
+        //@todo SAVEINSTANCE DESDE FAVORITES
         if (savedInstanceState != null){
             if (savedInstanceState.containsKey(CALLBACK_QUERY) || savedInstanceState.containsKey(CALLBACK_NAMESORT)){
                 queryMovie = savedInstanceState.getString(CALLBACK_QUERY);
@@ -167,18 +167,47 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         }
         assert mCursor != null;
         mCursor.close();
+        loadData();
+
         mRecyclerView.setVisibility(View.VISIBLE);
         hideProgressAndTextview();
 
-        movieAdapter = new MovieAdapterFavorites(dataDetail, this, MainActivity.this);
+        movieAdapter = new MovieAdapterFavorites(DetailActivity.arrayListMovies, this);
         movieAdapter.notifyDataSetChanged();
         mRecyclerView.setAdapter(movieAdapter);
-        if (dataDetail.size()==0){
-            tv_no_data.setVisibility(View.VISIBLE);
-        }else {
-            tv_no_data.setVisibility(View.INVISIBLE);
+        if (nameSort.equals("Favorites")){
+            if (dataDetail.size()==0){
+                tv_no_data.setVisibility(View.VISIBLE);
+            }else {
+                tv_no_data.setVisibility(View.INVISIBLE);
+            }
         }
 
+
+    }
+
+    private void loadData() {
+            DetailActivity.arrayListMovies.clear();
+            DetailActivity.movieFav=null;
+            Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null
+                    , null, null,
+                    MovieContract.MovieEntry.COLUMN_ID);
+
+            if (mCursor != null) {
+                while (mCursor.moveToNext()) {
+                    DetailActivity.arrayListMovies.add(new String[]{
+                            mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE)),
+                            mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_IMAGE)),
+                            mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE)),
+                            mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RATING)),
+                            mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_PLOT)),
+                            mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_ID))});
+
+                }
+                DetailActivity.movieFav= DetailActivity.arrayListMovies.toArray(new String[DetailActivity.arrayListMovies.size()][5]);
+                mCursor.close();
+
+        }
     }
 
 
@@ -256,5 +285,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         }
     }
 
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        tv_no_data.setVisibility(View.INVISIBLE);
+        loadData();
+        movieAdapter = new MovieAdapterFavorites(DetailActivity.arrayListMovies, this);
+        movieAdapter.notifyDataSetChanged();
+        mRecyclerView.setAdapter(movieAdapter);
+    }
 
 }

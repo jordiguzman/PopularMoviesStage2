@@ -58,7 +58,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:background="@drawable/rect_detail"
+        android:background="@drawable/rect_detail_red"
         android:onClick="clickRetry"
         android:text="@string/retry"
         android:textColor="@android:color/white"

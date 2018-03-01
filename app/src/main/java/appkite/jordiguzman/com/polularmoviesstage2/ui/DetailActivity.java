@@ -48,10 +48,9 @@ import butterknife.ButterKnife;
 
 import static appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity.btn_retry;
 import static appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity.tv_error;
-import static appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity.tv_no_data;
 
 
-public class DetailActivity extends AppCompatActivity implements  MovieAdapterFavorites.MovieClickListener{
+public class DetailActivity extends AppCompatActivity {
 
     ActivityDetailBinding mBinding;
     @BindView(R.id.rv_reviews)
@@ -91,68 +90,44 @@ public class DetailActivity extends AppCompatActivity implements  MovieAdapterFa
         position = bundle.getInt("sendPosition");
 
         if (!fromFavorites){
-            movieDataReceived = getIntent().getParcelableExtra("sendData");
-            title = movieDataReceived.getmTitle();
-            poster = movieDataReceived.getmMoviePoster();
-            plot = movieDataReceived.getmPlot();
-            rating = movieDataReceived.getmRating();
-            release = movieDataReceived.getmReleaseDate();
-            releaseFinal = release.substring(0, 4);
-            fb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_favorite));
-            Picasso.with(this)
-                    .load(URL_IMAGE_PATH.concat(poster))
-                    .into(mBinding.ivPosterDetail);
-
-            putData();
-
+            putVariablesMovies();
         }else {
-            fb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_delete));
-            loadData();
-            Picasso.with(this)
-                    .load(movieFav[position][1])
-                    .into(mBinding.ivPosterDetail);
-            title= movieFav[position][0];
-            plot= movieFav[position][4];
-            rating= movieFav[position][3];
-            release = movieFav[position][2];
-            releaseFinal = release.substring(0, 4);
-            id= movieFav[position][5];
-            putData();
-            viewFavorites();
-
+           putVariablesMoviesFavorites();
         }
-        Log.e("Valor fromFavorites: ", String.valueOf(fromFavorites));
-
 
         new MovieFetchTaskReviews().execute("reviews");
         new MoviewFetchTaskTrailer().execute("trailers");
 
     }
 
-    private void loadData() {
-        arrayListMovies.clear();
-        movieFav=null;
-        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null
-                , null, null,
-                MovieContract.MovieEntry.COLUMN_ID);
+    public void putVariablesMovies(){
+        movieDataReceived = getIntent().getParcelableExtra("sendData");
+        title = movieDataReceived.getmTitle();
+        poster = movieDataReceived.getmMoviePoster();
+        plot = movieDataReceived.getmPlot();
+        rating = movieDataReceived.getmRating();
+        release = movieDataReceived.getmReleaseDate();
+        releaseFinal = release.substring(0, 4);
+        fb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_favorite));
+        Picasso.with(this)
+                .load(URL_IMAGE_PATH.concat(poster))
+                .into(mBinding.ivPosterDetail);
 
-        if (mCursor != null) {
-            while (mCursor.moveToNext()) {
-                arrayListMovies.add(new String[]{
-                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE)),
-                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_IMAGE)),
-                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE)),
-                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RATING)),
-                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_PLOT)),
-                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_ID))});
+        putData();
+    }
 
-            }
-            movieFav= arrayListMovies.toArray(new String[arrayListMovies.size()][5]);
-
-
-            mCursor.close();
-        }
-
+    public void putVariablesMoviesFavorites(){
+        fb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_delete));
+        Picasso.with(this)
+                .load(movieFav[position][1])
+                .into(mBinding.ivPosterDetail);
+        title= movieFav[position][0];
+        plot= movieFav[position][4];
+        rating= movieFav[position][3];
+        release = movieFav[position][2];
+        releaseFinal = release.substring(0, 4);
+        id= movieFav[position][5];
+        putData();
     }
 
     public void putData(){
@@ -209,14 +184,7 @@ public class DetailActivity extends AppCompatActivity implements  MovieAdapterFa
         toast.show();
     }
 
-    private void viewFavorites() {
 
-            MainActivity.mRecyclerView.setVisibility(View.VISIBLE);
-            MovieAdapterFavorites movieAdapter = new MovieAdapterFavorites(dataDetail, getApplicationContext(), DetailActivity.this);
-            MainActivity.mRecyclerView.setAdapter(movieAdapter);
-
-
-    }
 
     public boolean isFavorited(){
 
@@ -247,7 +215,6 @@ public class DetailActivity extends AppCompatActivity implements  MovieAdapterFa
     private void deleteMovieData() {
         ContentResolver contentResolver = getContentResolver();
         Uri uri = MovieContract.MovieEntry.CONTENT_URI;
-
         uri = uri.buildUpon().appendPath(String.valueOf(id)).build();
 
         contentResolver.delete(uri, null, null);
@@ -308,10 +275,7 @@ public class DetailActivity extends AppCompatActivity implements  MovieAdapterFa
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onClickMovie(int position) {
 
-    }
 
 
     @SuppressLint("StaticFieldLeak")
@@ -366,7 +330,7 @@ public class DetailActivity extends AppCompatActivity implements  MovieAdapterFa
             assert trailers != null;
             if (trailers.length == 0) {
                 mRecyclerViewTrailers.setVisibility(View.INVISIBLE);
-                mBinding.tvAdapterNoData.setVisibility(View.VISIBLE);
+                mBinding.tvAdapterNoDataReview.setVisibility(View.VISIBLE);
 
             }
         }
@@ -433,14 +397,36 @@ public class DetailActivity extends AppCompatActivity implements  MovieAdapterFa
 
         }
     }
+    private void loadData() {
+        arrayListMovies.clear();
+        movieFav = null;
+        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null
+                , null, null,
+                MovieContract.MovieEntry.COLUMN_ID);
+
+        if (mCursor != null) {
+            while (mCursor.moveToNext()) {
+                arrayListMovies.add(new String[]{
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_IMAGE)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RATING)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_PLOT)),
+                        mCursor.getString(mCursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_ID))});
+
+            }
+            movieFav = arrayListMovies.toArray(new String[arrayListMovies.size()][5]);
+            mCursor.close();
+
+        }
+    }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        MovieAdapterFavorites movieAdapterFavorites = new MovieAdapterFavorites(MainActivity.dataDetail, this, null);
-        movieAdapterFavorites.notifyDataSetChanged();
-        if (dataDetail.size()==0) {
-            tv_no_data.setVisibility(View.VISIBLE);
-        }
+        loadData();
+        MovieAdapterFavorites movieAdapter = new MovieAdapterFavorites(DetailActivity.arrayListMovies, this);
+        movieAdapter.notifyDataSetChanged();
+        MainActivity.mRecyclerView.setAdapter(movieAdapter);
     }
 }
