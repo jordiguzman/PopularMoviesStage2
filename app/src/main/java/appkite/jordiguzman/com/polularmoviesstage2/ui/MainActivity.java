@@ -315,6 +315,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     @Override
     protected void onPostResume() {
         super.onPostResume();
+            if (!isOnline()){
+            mRecyclerView.setVisibility(View.INVISIBLE);
+            errorNetworkApi();
+            return;
+        }
         tv_no_data.setVisibility(View.INVISIBLE);
         if (DetailActivity.fromFavorites || isFavorited){
             isFavorited= true;
