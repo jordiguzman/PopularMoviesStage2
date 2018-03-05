@@ -2,7 +2,6 @@ package appkite.jordiguzman.com.polularmoviesstage2.ui;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -11,6 +10,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -35,19 +35,20 @@ import appkite.jordiguzman.com.polularmoviesstage2.model.Movie;
 import appkite.jordiguzman.com.polularmoviesstage2.utils.FetchMyDataTask;
 import appkite.jordiguzman.com.polularmoviesstage2.utils.MovieUrlUtils;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieClickListener {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieClickListener,
+            MovieAdapterFavorites.MovieClickListener{
 
-    private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String CALLBACK_QUERY = "callbackQuery";
     private static final String CALLBACK_NAMESORT= "callbackNamesort";
     private static final String CALLBACK_FAVORITES = "callbackFavorites";
     public static String queryMovie = "popular";
     private String nameSort = "Popular Movies";
     public static Movie[] mMovie = null;
-    private boolean isFavorited;
+    public static boolean isFavorited;
     private MovieAdapterFavorites movieAdapter;
     public static ArrayList<String> dataDetail = new ArrayList<>();
-
+    @SuppressLint("StaticFieldLeak")
+    public static Context mContext;
     @SuppressLint("StaticFieldLeak")
     public static RecyclerView mRecyclerView;
     @SuppressLint("StaticFieldLeak")
@@ -61,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         tv_error = findViewById(R.id.tv_error);
         tv_no_data = findViewById(R.id.tv_no_data);
         tv_no_data.setVisibility(View.INVISIBLE);
+        mContext = getApplicationContext();
+
 
         setTitle(nameSort);
         if (!isOnline()) {
@@ -82,9 +86,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             return;
         }
 
-
-        //@todo SAVEINSTANCE DESDE FAVORITES
         if (savedInstanceState != null){
+            if (savedInstanceState.containsKey(CALLBACK_FAVORITES)){
+                nameSort= savedInstanceState.getString(CALLBACK_FAVORITES);
+                queryMovie = "favorites";
+                setTitle(nameSort);
+                loadDataFavorites();
+                return;
+            }
             if (savedInstanceState.containsKey(CALLBACK_QUERY) || savedInstanceState.containsKey(CALLBACK_NAMESORT)){
                 queryMovie = savedInstanceState.getString(CALLBACK_QUERY);
                 nameSort = savedInstanceState.getString(CALLBACK_NAMESORT);
@@ -93,16 +102,27 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 return;
             }
         }
-
+        if (nameSort.equals("Favorites"))return;
         new FetchMyDataTask(this, new MovieFetchTaskCompleteListener()).execute(queryMovie);
 
     }
 
-
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void loadDataFavorites(){
+        loadFavorites();
+        movieAdapter = new MovieAdapterFavorites(DetailActivity.arrayListMovies, this, MainActivity.this);
+        movieAdapter.notifyDataSetChanged();
+        mRecyclerView.setAdapter(movieAdapter);
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        if (isFavorited){
+            String nameSortSaved = nameSort;
+            outState.putString(CALLBACK_FAVORITES, nameSortSaved);
+            return;
+        }
         String queryMovieSaved = queryMovie;
         String nameSortSaved = nameSort;
         outState.putString(CALLBACK_QUERY, queryMovieSaved);
@@ -126,7 +146,6 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     }
 
     @TargetApi(Build.VERSION_CODES.O)
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (!isOnline()) return false;
@@ -134,19 +153,25 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         int id = item.getItemId();
         switch (id) {
             case R.id.popularity:
+                isFavorited=false;
+                tv_no_data.setVisibility(View.INVISIBLE);
                 queryMovie = "popular";
                 new FetchMyDataTask(this, new MovieFetchTaskCompleteListener()).execute(queryMovie);
                 nameSort = "Popular Movies";
                 setTitle(nameSort);
                 break;
             case R.id.top_rated:
+                isFavorited=false;
+                tv_no_data.setVisibility(View.INVISIBLE);
                 queryMovie = "top_rated";
                 new FetchMyDataTask(this, new MovieFetchTaskCompleteListener()).execute(queryMovie);
                 nameSort = "Top Rated Movies";
                 setTitle(nameSort);
                 break;
             case R.id.favorites:
+                isFavorited= true;
                 nameSort= "Favorites";
+                queryMovie = "favorites";
                 loadFavorites();
                 setTitle(nameSort);
                 break;
@@ -155,10 +180,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void loadFavorites() {
+    public  void loadFavorites() {
         dataDetail.clear();
 
-        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, null);
+        Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, MovieContract.MovieEntry._ID);
 
         if (mCursor != null){
             while (mCursor.moveToNext()){
@@ -172,12 +197,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mRecyclerView.setVisibility(View.VISIBLE);
         hideProgressAndTextview();
 
-        movieAdapter = new MovieAdapterFavorites(DetailActivity.arrayListMovies, this);
+        movieAdapter = new MovieAdapterFavorites(DetailActivity.arrayListMovies, this, MainActivity.this);
         movieAdapter.notifyDataSetChanged();
         mRecyclerView.setAdapter(movieAdapter);
         if (nameSort.equals("Favorites")){
             if (dataDetail.size()==0){
                 tv_no_data.setVisibility(View.VISIBLE);
+                tv_no_data.setTextColor(ContextCompat.getColor(this, R.color.secondary_text));
             }else {
                 tv_no_data.setVisibility(View.INVISIBLE);
             }
@@ -191,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             DetailActivity.movieFav=null;
             Cursor mCursor = getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null
                     , null, null,
-                    MovieContract.MovieEntry.COLUMN_ID);
+                    MovieContract.MovieEntry._ID);
 
             if (mCursor != null) {
                 while (mCursor.moveToNext()) {
@@ -214,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     public static void errorNetworkApi() {
         progressBar.setVisibility(View.INVISIBLE);
         tv_error.setVisibility(View.VISIBLE);
+        tv_error.setTextColor(ContextCompat.getColor(mContext, R.color.secondary_text));
         btn_retry.setVisibility(View.VISIBLE);
     }
 
@@ -246,20 +273,19 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             errorNetworkApi();
             return;
         }
-
         if (nameSort.equals("Favorites")){
             isFavorited=true;
             Intent intentToDetail = new Intent(this, DetailActivity.class);
             intentToDetail.putExtra("fromFavorites", isFavorited);
             intentToDetail.putExtra("sendPosition", position);
-            startActivity(intentToDetail, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
+            startActivity(intentToDetail);
             isFavorited=false;
             return;
         }
 
         Intent intentToDetail = new Intent(this, DetailActivity.class);
         intentToDetail.putExtra("sendData",  mMovie[position]);
-        startActivity(intentToDetail, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
+        startActivity(intentToDetail);
     }
 
 
@@ -285,14 +311,22 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onPostResume() {
         super.onPostResume();
         tv_no_data.setVisibility(View.INVISIBLE);
-        loadData();
-        movieAdapter = new MovieAdapterFavorites(DetailActivity.arrayListMovies, this);
-        movieAdapter.notifyDataSetChanged();
-        mRecyclerView.setAdapter(movieAdapter);
+        if (DetailActivity.fromFavorites || isFavorited){
+            isFavorited= true;
+            nameSort= "Favorites";
+            loadDataFavorites();
+            setTitle(nameSort);
+        }else if (queryMovie.equals("top_rated")){
+            isFavorited=false;
+            nameSort = "Top Rated Movies";
+            setTitle(nameSort);
+        }
+
     }
 
 }

@@ -1,6 +1,0 @@
- if (!DetailActivity.fromFavorites) {
-             if (DetailActivity.arrayListMovies.size() == 0) {
-                 MainActivity.tv_no_data.setVisibility(View.VISIBLE);
-             }
-             return;
-         }

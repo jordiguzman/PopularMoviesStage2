@@ -1,5 +1,6 @@
 package appkite.jordiguzman.com.polularmoviesstage2.adapter;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,20 +18,24 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewHold
     private TextView tv_review_adapter;
 
 
+
     public ReviewAdapter(Review[] review) {
         this.mReview = review;
+
     }
 
+    @NonNull
     @Override
-    public ReviewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ReviewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.list_item_review, parent, false);
 
         return new ReviewHolder(view);
     }
 
+
     @Override
-    public void onBindViewHolder(ReviewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ReviewHolder holder, int position) {
         String author= mReview[position].getmAuthor();
         String review= mReview[position].getmContent();
         tv_author_adapter.setText(author);

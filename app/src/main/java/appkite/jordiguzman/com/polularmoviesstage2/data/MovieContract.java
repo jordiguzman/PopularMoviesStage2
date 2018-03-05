@@ -18,7 +18,7 @@ public class MovieContract {
                         .appendPath(PATH_MOVIES)
                         .build();
 
-        public static final String TABLE_NAME = "movies";
+        static final String TABLE_NAME = "movies";
         public static final String COLUMN_ID = "id";
         public static final String COLUMN_TITLE = "title";
         public static final String COLUMN_IMAGE = "image";

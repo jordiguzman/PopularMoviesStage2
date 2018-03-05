@@ -15,7 +15,7 @@ public class MovieJsonUtils extends Application{
 
 
 
-    //private static final String LOG_TAG = MovieJsonUtils.class.getSimpleName();
+
     private static final String MOVIE_RESULTS = "results";
     private static final String MOVIE_ID = "id";
     private static final String MOVIE_TITLE = "title";

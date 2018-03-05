@@ -1,5 +1,6 @@
 package appkite.jordiguzman.com.polularmoviesstage2.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -8,8 +9,10 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 
 import appkite.jordiguzman.com.polularmoviesstage2.R;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class Splash extends AppCompatActivity {
+
     CountDownTimer mCt;
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -45,5 +48,8 @@ public class Splash extends AppCompatActivity {
     public void onBackPressed() {
 
     }
-
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
 }

@@ -12,6 +12,8 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import appkite.jordiguzman.com.polularmoviesstage2.R;
+
 import static appkite.jordiguzman.com.polularmoviesstage2.data.MovieContract.MovieEntry.TABLE_NAME;
 
 
@@ -19,7 +21,6 @@ import static appkite.jordiguzman.com.polularmoviesstage2.data.MovieContract.Mov
 
 public class MovieContentProvider extends ContentProvider {
 
-    public static final String LOG_TAG = MovieContentProvider.class.getSimpleName();
     public static final int MOVIES = 101;
     public static final int MOVIES_WITH_ID = 102;
 
@@ -56,12 +57,10 @@ public class MovieContentProvider extends ContentProvider {
 
                 if (id > 0){
                     returnUri = ContentUris.withAppendedId(MovieContract.MovieEntry.CONTENT_URI, id);
-                }else {
-                    throw new SQLException("Failed to insert row into: " + uri);
-                }
+                }else throw new SQLException(getContext().getString(R.string.failed_insert_row) + uri);
                 break;
                 default:
-                    throw new UnsupportedOperationException("Unknow uri: " + uri);
+                    throw new UnsupportedOperationException(getContext().getString(R.string.unknow_uri) + uri);
         }
         getContext().getContentResolver().notifyChange(uri, null);
         return returnUri;
@@ -85,7 +84,7 @@ public class MovieContentProvider extends ContentProvider {
                         sortOrder);
                 break;
                 default:
-                    throw new UnsupportedOperationException("Unknow uri: " + uri);
+                    throw new UnsupportedOperationException(getContext().getString(R.string.unknow_uri) + uri);
         }
         retCursor.setNotificationUri(getContext().getContentResolver(), uri);
         return retCursor;
@@ -112,7 +111,7 @@ public class MovieContentProvider extends ContentProvider {
                 movieDeleted = db.delete(TABLE_NAME, MovieContract.MovieEntry.COLUMN_ID +"=?", new String[]{id});
                 break;
                 default:
-                    throw new UnsupportedOperationException("Unknow uri: " + uri);
+                    throw new UnsupportedOperationException(getContext().getString(R.string.unknow_uri) + uri);
         }
         if (movieDeleted != 0){
 

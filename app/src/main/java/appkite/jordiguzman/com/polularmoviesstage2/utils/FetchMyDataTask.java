@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 
 import java.net.URL;
@@ -21,7 +22,7 @@ import static appkite.jordiguzman.com.polularmoviesstage2.ui.MainActivity.tv_err
 public class FetchMyDataTask extends AsyncTask<String, Void, Movie[]> {
 
 
-    private static final String LOG_TAG= FetchMyDataTask.class.getSimpleName();
+
     @SuppressLint("StaticFieldLeak")
     private Context mContext;
     private AsynTaskCompleteListeningMovie mListener;
@@ -50,6 +51,7 @@ public class FetchMyDataTask extends AsyncTask<String, Void, Movie[]> {
         if (MovieUrlUtils.API_KEY.equals("")) {
             MainActivity.errorNetworkApi();
             tv_error.setText(R.string.missing_api_key);
+            tv_error.setTextColor(ContextCompat.getColor(mContext, R.color.secondary_text));
             btn_retry.setVisibility(View.INVISIBLE);
             return null;
         }
